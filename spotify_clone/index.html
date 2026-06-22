@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spotify Clone</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #121212;
+        --bg-elevated: #181818;
+        --bg-highlight: #282828;
+        --text: #fff;
+        --muted: #b3b3b3;
+        --green: #1db954;
+        --green-hover: #1ed760;
+        --sidebar-width: 240px;
+        --player-height: 90px;
+      }
+
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) 1fr;
+        grid-template-rows: 1fr var(--player-height);
+        height: 100vh;
+      }
+
+      .sidebar {
+        grid-row: 1 / 3;
+        background: #000;
+        padding: 1.5rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.4rem;
+        font-weight: 700;
+        padding: 0 0.5rem;
+      }
+
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--green);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 1rem;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.65rem 0.75rem;
+        border-radius: 4px;
+        color: var(--muted);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .nav-link.active,
+      .nav-link:hover {
+        color: var(--text);
+        background: var(--bg-highlight);
+      }
+
+      .main {
+        overflow-y: auto;
+        padding: 1.5rem 2rem calc(var(--player-height) + 1rem);
+        background: linear-gradient(180deg, #1f3b2c 0%, var(--bg) 280px);
+      }
+
+      .hero h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        margin-bottom: 0.5rem;
+      }
+
+      .hero p {
+        color: var(--muted);
+        margin-bottom: 2rem;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .song-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+      }
+
+      .song-card {
+        background: var(--bg-elevated);
+        padding: 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .song-card:hover {
+        background: var(--bg-highlight);
+      }
+
+      .song-card.playing {
+        outline: 2px solid var(--green);
+      }
+
+      .song-cover {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #1db954, #191414);
+        display: grid;
+        place-items: center;
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .song-card h3 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .song-card p {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .track-list {
+        margin-top: 2rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .track-row {
+        display: grid;
+        grid-template-columns: 40px 1fr 1fr 60px;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .track-row:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .track-row.playing {
+        color: var(--green);
+      }
+
+      .track-row .index {
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .track-row.playing .index {
+        color: var(--green);
+      }
+
+      .track-row .track-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .track-row .artist {
+        color: var(--muted);
+      }
+
+      .track-row .duration {
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .player {
+        grid-column: 2;
+        background: var(--bg-highlight);
+        border-top: 1px solid #282828;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .now-playing {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+      }
+
+      .now-playing-cover {
+        width: 56px;
+        height: 56px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, #1db954, #191414);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .now-playing-info h4 {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .now-playing-info p {
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .control-buttons {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .control-buttons button {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 0.25rem;
+      }
+
+      .control-buttons button:hover {
+        color: var(--text);
+      }
+
+      .control-buttons .play-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--text);
+        color: #000;
+        font-size: 1.1rem;
+        display: grid;
+        place-items: center;
+      }
+
+      .control-buttons .play-btn:hover {
+        transform: scale(1.05);
+        background: #fff;
+      }
+
+      .progress-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 600px;
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+
+      .progress-wrap input[type="range"] {
+        flex: 1;
+        accent-color: var(--green);
+        cursor: pointer;
+      }
+
+      .volume {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+      }
+
+      .volume input[type="range"] {
+        width: 100px;
+        accent-color: var(--green);
+        cursor: pointer;
+      }
+
+      @media (max-width: 768px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          display: none;
+        }
+
+        .player {
+          grid-column: 1;
+          grid-template-columns: 1fr;
+          grid-template-rows: auto auto;
+          padding: 0.75rem;
+        }
+
+        .volume {
+          display: none;
+        }
+
+        .track-row {
+          grid-template-columns: 30px 1fr 50px;
+        }
+
+        .track-row .artist {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="logo">
+          <div class="logo-icon">♪</div>
+          Spotify Clone
+        </div>
+        <nav>
+          <a href="#" class="nav-link active">Home</a>
+          <a href="#" class="nav-link">Search</a>
+          <a href="#" class="nav-link">Your Library</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <section class="hero">
+          <h1>Michael Jackson</h1>
+          <p>Classic hits — click any song to play</p>
+        </section>
+
+        <h2 class="section-title">Popular tracks</h2>
+        <div class="song-grid" id="songGrid">
+          <article class="song-card playing" data-index="0" data-file="Michael Jackson - Billie Jean.mp3" data-emoji="&#127917;">
+            <div class="song-cover">&#127917;</div>
+            <h3>Billie Jean</h3>
+            <p>Michael Jackson</p>
+          </article>
+          <article class="song-card" data-index="1" data-file="Michael Jackson - Smooth Criminal.mp3" data-emoji="&#127913;">
+            <div class="song-cover">&#127913;</div>
+            <h3>Smooth Criminal</h3>
+            <p>Michael Jackson</p>
+          </article>
+          <article class="song-card" data-index="2" data-file="Michael Jackson - Don't Stop 'Til You Get Enough.mp3" data-emoji="&#10024;">
+            <div class="song-cover">&#10024;</div>
+            <h3>Don&apos;t Stop &apos;Til You Get Enough</h3>
+            <p>Michael Jackson</p>
+          </article>
+          <article class="song-card" data-index="3" data-file="Michael Jackson - Beat It.mp3" data-emoji="&#127928;">
+            <div class="song-cover">&#127928;</div>
+            <h3>Beat It</h3>
+            <p>Michael Jackson</p>
+          </article>
+        </div>
+
+        <div class="track-list" id="trackList">
+          <div class="track-row playing" data-index="0" data-file="Michael Jackson - Billie Jean.mp3" data-emoji="&#127917;">
+            <span class="index">1</span>
+            <span class="track-title">Billie Jean</span>
+            <span class="artist">Michael Jackson</span>
+            <span class="duration">--:--</span>
+          </div>
+          <div class="track-row" data-index="1" data-file="Michael Jackson - Smooth Criminal.mp3" data-emoji="&#127913;">
+            <span class="index">2</span>
+            <span class="track-title">Smooth Criminal</span>
+            <span class="artist">Michael Jackson</span>
+            <span class="duration">--:--</span>
+          </div>
+          <div class="track-row" data-index="2" data-file="Michael Jackson - Don't Stop 'Til You Get Enough.mp3" data-emoji="&#10024;">
+            <span class="index">3</span>
+            <span class="track-title">Don&apos;t Stop &apos;Til You Get Enough</span>
+            <span class="artist">Michael Jackson</span>
+            <span class="duration">--:--</span>
+          </div>
+          <div class="track-row" data-index="3" data-file="Michael Jackson - Beat It.mp3" data-emoji="&#127928;">
+            <span class="index">4</span>
+            <span class="track-title">Beat It</span>
+            <span class="artist">Michael Jackson</span>
+            <span class="duration">--:--</span>
+          </div>
+        </div>
+      </main>
+
+      <footer class="player">
+        <div class="now-playing">
+          <div class="now-playing-cover" id="playerCover">&#127917;</div>
+          <div class="now-playing-info">
+            <h4 id="playerTitle">Billie Jean</h4>
+            <p id="playerArtist">Michael Jackson</p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-buttons">
+            <button type="button" id="prevBtn" title="Previous">⏮</button>
+            <button type="button" class="play-btn" id="playBtn" title="Play">▶</button>
+            <button type="button" id="nextBtn" title="Next">⏭</button>
+          </div>
+          <div class="progress-wrap">
+            <span id="currentTime">0:00</span>
+            <input type="range" id="progressBar" min="0" max="100" value="0" />
+            <span id="totalTime">0:00</span>
+          </div>
+        </div>
+
+        <div class="volume">
+          <span>🔊</span>
+          <input type="range" id="volumeBar" min="0" max="100" value="80" />
+        </div>
+      </footer>
+    </div>
+
+    <audio id="audio"></audio>
+
+    <script>
+      (function () {
+        var audio = document.getElementById("audio");
+        var playBtn = document.getElementById("playBtn");
+        var prevBtn = document.getElementById("prevBtn");
+        var nextBtn = document.getElementById("nextBtn");
+        var progressBar = document.getElementById("progressBar");
+        var volumeBar = document.getElementById("volumeBar");
+        var playerTitle = document.getElementById("playerTitle");
+        var playerArtist = document.getElementById("playerArtist");
+        var playerCover = document.getElementById("playerCover");
+        var currentTimeEl = document.getElementById("currentTime");
+        var totalTimeEl = document.getElementById("totalTime");
+        var songCards = document.querySelectorAll(".song-card");
+        var trackRows = document.querySelectorAll(".track-row");
+
+        var currentIndex = 0;
+        var isPlaying = false;
+        var tracks = [];
+
+        songCards.forEach(function (card) {
+          tracks.push({
+            title: card.querySelector("h3").textContent,
+            artist: card.querySelector("p").textContent,
+            file: card.getAttribute("data-file"),
+            emoji: card.getAttribute("data-emoji"),
+          });
+        });
+
+        function formatTime(seconds) {
+          if (!seconds || isNaN(seconds)) return "0:00";
+          var mins = Math.floor(seconds / 60);
+          var secs = Math.floor(seconds % 60);
+          return mins + ":" + (secs < 10 ? "0" : "") + secs;
+        }
+
+        function updateActiveUI() {
+          for (var i = 0; i < songCards.length; i++) {
+            songCards[i].classList.remove("playing");
+            trackRows[i].classList.remove("playing");
+          }
+          if (songCards[currentIndex]) songCards[currentIndex].classList.add("playing");
+          if (trackRows[currentIndex]) trackRows[currentIndex].classList.add("playing");
+        }
+
+        function loadSong(index, autoplay) {
+          currentIndex = index;
+          var track = tracks[index];
+
+          audio.src = encodeURI(track.file);
+          playerTitle.textContent = track.title;
+          playerArtist.textContent = track.artist;
+          playerCover.innerHTML = track.emoji;
+          updateActiveUI();
+
+          if (autoplay) {
+            audio.play().then(function () {
+              isPlaying = true;
+              playBtn.textContent = "\u23F8";
+            }).catch(function () {
+              isPlaying = false;
+              playBtn.textContent = "\u25B6";
+            });
+          } else {
+            isPlaying = false;
+            playBtn.textContent = "\u25B6";
+          }
+        }
+
+        function togglePlay() {
+          if (!audio.src) {
+            loadSong(0, true);
+            return;
+          }
+
+          if (isPlaying) {
+            audio.pause();
+            isPlaying = false;
+            playBtn.textContent = "\u25B6";
+          } else {
+            audio.play().then(function () {
+              isPlaying = true;
+              playBtn.textContent = "\u23F8";
+            });
+          }
+        }
+
+        function playNext() {
+          loadSong((currentIndex + 1) % tracks.length, true);
+        }
+
+        function playPrev() {
+          if (audio.currentTime > 3) {
+            audio.currentTime = 0;
+            return;
+          }
+          loadSong((currentIndex - 1 + tracks.length) % tracks.length, true);
+        }
+
+        function onTrackClick(index) {
+          if (currentIndex === index && isPlaying) {
+            audio.pause();
+            isPlaying = false;
+            playBtn.textContent = "\u25B6";
+          } else {
+            loadSong(index, true);
+          }
+        }
+
+        playBtn.addEventListener("click", togglePlay);
+        nextBtn.addEventListener("click", playNext);
+        prevBtn.addEventListener("click", playPrev);
+
+        for (var c = 0; c < songCards.length; c++) {
+          (function (index) {
+            songCards[index].addEventListener("click", function () {
+              onTrackClick(index);
+            });
+            trackRows[index].addEventListener("click", function () {
+              onTrackClick(index);
+            });
+          })(c);
+        }
+
+        audio.addEventListener("timeupdate", function () {
+          if (audio.duration) {
+            progressBar.value = (audio.currentTime / audio.duration) * 100;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+          }
+        });
+
+        audio.addEventListener("loadedmetadata", function () {
+          totalTimeEl.textContent = formatTime(audio.duration);
+          if (trackRows[currentIndex]) {
+            var durationEl = trackRows[currentIndex].querySelector(".duration");
+            if (durationEl) durationEl.textContent = formatTime(audio.duration);
+          }
+        });
+
+        audio.addEventListener("ended", playNext);
+
+        audio.addEventListener("error", function () {
+          playerTitle.textContent = "Could not load: " + tracks[currentIndex].title;
+          isPlaying = false;
+          playBtn.textContent = "\u25B6";
+        });
+
+        progressBar.addEventListener("input", function () {
+          if (audio.duration) {
+            audio.currentTime = (progressBar.value / 100) * audio.duration;
+          }
+        });
+
+        volumeBar.addEventListener("input", function () {
+          audio.volume = volumeBar.value / 100;
+        });
+
+        document.querySelectorAll(".nav-link").forEach(function (link) {
+          link.addEventListener("click", function (event) {
+            event.preventDefault();
+          });
+        });
+
+        audio.volume = 0.8;
+        loadSong(0, false);
+      })();
+    </script>
+  </body>
+</html>
